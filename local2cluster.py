@@ -48,7 +48,7 @@ def send_file(sftp, localDIR, clusterDIR, filename):
                 remote_file.write(data)
                 pbar.update(file_size)
 
-    print('File transfer complete.')
+    print(f'{GREEN}File {filename} transfer complete.{RESET}')
 
 def send_folder(sftp, localDIR, clusterDIR, skip_dots=True):
     
@@ -91,7 +91,8 @@ def send_folder(sftp, localDIR, clusterDIR, skip_dots=True):
                     pbar.update(transferred - pbar.n)
                 sftp.put(local_file_path, remote_file_path, callback=callback)
 
-    print(f'{GREEN}Folder transfer complete.{RESET}')
+    foldername = os.path.basename(os.path.normpath(localDIR))
+    print(f'{GREEN}Folder {foldername} transfer complete.{RESET}')
 
 def local2cluster(localDIR, clusterDIR, filename=None, skip_dots=True):
     ssh, sftp = login2ssh()    
