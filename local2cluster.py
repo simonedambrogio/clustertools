@@ -10,11 +10,8 @@ YELLOW = '\033[93m'
 RESET = '\033[0m'
 
 def login2ssh(hostname='jalapeno.fmrib.ox.ac.uk'):
-    # username = input("Enter your username: ")
-    # password = getpass.getpass("Enter your password: ")
-    
-    username = 'jdf650'
-    password = 'judiciary-SELECTED-ISOLATION-GUY'
+    username = input("Enter your username: ")
+    password = getpass.getpass("Enter your password: ")
     print(f"Logging in to {hostname} as {username}...")
     
     ssh = paramiko.SSHClient()
