@@ -45,12 +45,12 @@ cluster2local(
 
 Transfer files/folders from local to cluster:
 ```bash
-python local2cluster.py -l /path/to/local/directory -c /path/to/cluster/directory [-f filename] [--skip-dots True/False] [--host hostname]
+local2cluster -l /path/to/local/directory -c /path/to/cluster/directory [-f filename] [--skip-dots True/False] [--host hostname]
 ```
 
 Transfer files/folders from cluster to local:
 ```bash
-python cluster2local.py -l /path/to/local/directory -j /path/to/cluster/directory [-f filename] [--host hostname]
+cluster2local -l /path/to/local/directory -j /path/to/cluster/directory [-f filename] [--host hostname]
 ```
 
 Arguments:
