@@ -5,8 +5,8 @@ setup(
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
-        "paramiko",
-        "tqdm",
+        "paramiko>=3.5.1",
+        "tqdm==4.65.0",
     ],
     entry_points={
         'console_scripts': [
