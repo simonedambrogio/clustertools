@@ -111,7 +111,7 @@ def main():
     parser.add_argument('-c', '--cluster_dir', required=True, help='Destination directory path on cluster')
     parser.add_argument('-f', '--filename', help='Specific file to transfer (optional)', default=None)
     parser.add_argument('--skip-dots', default=True, help='Skip files starting with "._"')
-    parser.add_argument('--host', default='clint.fmrib.ox.ac.uk', help='Hostname (default: clint.fmrib.ox.ac.uk)')
+    parser.add_argument('--host', default='sftp.fmrib.ox.ac.uk', help='Hostname (default: sftp.fmrib.ox.ac.uk)')
     
     args = parser.parse_args()
     
