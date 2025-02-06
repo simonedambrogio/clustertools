@@ -9,7 +9,7 @@ GREEN = '\033[92m'
 YELLOW = '\033[93m'
 RESET = '\033[0m'
 
-def login2ssh(hostname='clint.fmrib.ox.ac.uk'):
+def login2ssh(hostname='sftp.fmrib.ox.ac.uk'):
     username = input("Enter your username: ")
     password = getpass.getpass("Enter your password: ")
     print(f"Logging in to {hostname} as {username}...")

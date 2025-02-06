@@ -3,7 +3,6 @@ import paramiko
 import getpass
 from stat import S_ISDIR
 from tqdm import tqdm
-import argparse
 
 # Color constants
 RED = '\033[91m'
@@ -11,7 +10,7 @@ GREEN = '\033[92m'
 YELLOW = '\033[93m'
 RESET = '\033[0m'
 
-def login2ssh(hostname='clint.fmrib.ox.ac.uk'):
+def login2ssh(hostname='sftp.fmrib.ox.ac.uk'):
     username = input("Enter your username: ")
     password = getpass.getpass("Enter your password: ")
     print(f"Logging in to {hostname} as {username}...")
@@ -94,19 +93,17 @@ def jalapeno2local(localDIR, jalapenoDIR, filename=None):
         ssh.close()
         print(f'{GREEN}Operation complete.{RESET}')
 
-def main():
-    parser = argparse.ArgumentParser(description='Transfer files/folders from cluster server to local machine')
-    parser.add_argument('-l', '--local_dir', required=True, help='Local directory path')
-    parser.add_argument('-c', '--cluster_dir', required=True, help='Source directory path on cluster')
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Transfer files/folders from Jalapeno server to local machine')
+    parser.add_argument('-l', '--local_dir', required=True, help='Local destination directory path')
+    parser.add_argument('-j', '--jalapeno_dir', required=True, help='Source directory path on Jalapeno')
     parser.add_argument('-f', '--filename', help='Specific file to transfer (optional)', default=None)
-    parser.add_argument('--skip-dots', default=True, help='Skip files starting with "._"')
     parser.add_argument('--host', default='clint.fmrib.ox.ac.uk', help='Hostname (default: clint.fmrib.ox.ac.uk)')
     
     args = parser.parse_args()
     
-    jalapeno2local(args.local_dir, args.cluster_dir, args.filename)
-
-if __name__ == "__main__":
-    main()
+    jalapeno2local(args.local_dir, args.jalapeno_dir, args.filename)
 
 
