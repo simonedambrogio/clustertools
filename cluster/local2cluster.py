@@ -103,7 +103,7 @@ def local2cluster(localDIR, clusterDIR, filename=None, skip_dots=True):
         ssh.close()
         print('Operation complete.')
 
-if __name__ == "__main__":
+def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Transfer files/folders from local machine to cluster server')
@@ -116,3 +116,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     local2cluster(args.local_dir, args.cluster_dir, args.filename, args.skip_dots)
+
+if __name__ == "__main__":
+    main()
