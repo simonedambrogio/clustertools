@@ -50,13 +50,12 @@ local2cluster -l /path/to/local/directory -c /path/to/cluster/directory [-f file
 
 Transfer files/folders from cluster to local:
 ```bash
-cluster2local -l /path/to/local/directory -j /path/to/cluster/directory [-f filename] [--host hostname]
+cluster2local -l /path/to/local/directory -c /path/to/cluster/directory [-f filename] [--host hostname]
 ```
 
 Arguments:
 - `-l, --local_dir`: Local directory path
 - `-c, --cluster_dir`: Destination directory path on cluster (for local2cluster)
-- `-j, --jalapeno_dir`: Source directory path on cluster (for cluster2local)
 - `-f, --filename`: Optional specific file to transfer
 - `--host`: Optional hostname (default: clint.fmrib.ox.ac.uk)
 - `--skip-dots`: Optional flag to skip files starting with "._" (local2cluster only)
