@@ -9,7 +9,7 @@ GREEN = '\033[92m'
 YELLOW = '\033[93m'
 RESET = '\033[0m'
 
-def login2ssh(hostname='jalapeno.fmrib.ox.ac.uk'):
+def login2ssh(hostname='clint.fmrib.ox.ac.uk'):
     username = input("Enter your username: ")
     password = getpass.getpass("Enter your password: ")
     print(f"Logging in to {hostname} as {username}...")
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--cluster_dir', required=True, help='Destination directory path on cluster')
     parser.add_argument('-f', '--filename', help='Specific file to transfer (optional)', default=None)
     parser.add_argument('--skip-dots', default=True, help='Skip files starting with "._"')
-    parser.add_argument('--host', default='jalapeno.fmrib.ox.ac.uk', help='Hostname (default: jalapeno.fmrib.ox.ac.uk)')
+    parser.add_argument('--host', default='clint.fmrib.ox.ac.uk', help='Hostname (default: clint.fmrib.ox.ac.uk)')
     
     args = parser.parse_args()
     
