@@ -36,7 +36,7 @@ local2cluster(
 # Transfer from cluster to local
 cluster2local(
     localDIR="/path/to/local/directory",
-    jalapenoDIR="/path/to/cluster/directory",
+    clusterDIR="/path/to/cluster/directory",
     filename="example.txt"  # Optional: if not provided, transfers entire folder
 )
 ```
@@ -50,7 +50,7 @@ local2cluster -l /path/to/local/directory -c /path/to/cluster/directory [-f file
 
 Transfer files/folders from cluster to local:
 ```bash
-cluster2local -l /path/to/local/directory -c /path/to/cluster/directory [-f filename] [--host hostname]
+cluster2local -c /path/to/cluster/directory -l /path/to/local/directory [-f filename] [--host hostname]
 ```
 
 Arguments:
