@@ -3,6 +3,7 @@ import paramiko
 import getpass
 from stat import S_ISDIR
 from tqdm import tqdm
+import argparse
 
 # Color constants
 RED = '\033[91m'
@@ -93,17 +94,19 @@ def jalapeno2local(localDIR, jalapenoDIR, filename=None):
         ssh.close()
         print(f'{GREEN}Operation complete.{RESET}')
 
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description='Transfer files/folders from Jalapeno server to local machine')
-    parser.add_argument('-l', '--local_dir', required=True, help='Local destination directory path')
-    parser.add_argument('-j', '--jalapeno_dir', required=True, help='Source directory path on Jalapeno')
+def main():
+    parser = argparse.ArgumentParser(description='Transfer files/folders from cluster server to local machine')
+    parser.add_argument('-l', '--local_dir', required=True, help='Local directory path')
+    parser.add_argument('-c', '--cluster_dir', required=True, help='Source directory path on cluster')
     parser.add_argument('-f', '--filename', help='Specific file to transfer (optional)', default=None)
+    parser.add_argument('--skip-dots', default=True, help='Skip files starting with "._"')
     parser.add_argument('--host', default='clint.fmrib.ox.ac.uk', help='Hostname (default: clint.fmrib.ox.ac.uk)')
     
     args = parser.parse_args()
     
-    jalapeno2local(args.local_dir, args.jalapeno_dir, args.filename)
+    jalapeno2local(args.local_dir, args.cluster_dir, args.filename)
+
+if __name__ == "__main__":
+    main()
 
 
