@@ -8,6 +8,12 @@ setup(
         "paramiko",
         "tqdm",
     ],
+    entry_points={
+        'console_scripts': [
+            'cluster2local=cluster.cluster2local:main',
+            'local2cluster=cluster.local2cluster:main',
+        ],
+    },
     author="Simone D'Ambrogio",
     description="A Python package for easily transferring files and folders between local machines and remote clusters",
     long_description=open("README.md").read(),
