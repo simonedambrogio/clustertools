@@ -11,9 +11,11 @@ GREEN = '\033[92m'
 YELLOW = '\033[93m'
 RESET = '\033[0m'
 
-def login2ssh(hostname='sftp.fmrib.ox.ac.uk'):
-    username = input("Enter your username: ")
-    password = getpass.getpass("Enter your password: ")
+def login2ssh(username=None, password=None, hostname='sftp.fmrib.ox.ac.uk'):
+    if username is None:
+        username = input("Enter your username: ")
+    if password is None:
+        password = getpass.getpass("Enter your password: ")
     print(f"Logging in to {hostname} as {username}...")
     
     ssh = paramiko.SSHClient()
@@ -82,8 +84,8 @@ def download_folder(sftp, localDIR, clusterDIR, is_top_level=True):
                         pbar.update(transferred - pbar.n)
                     sftp.get(remote_file_path, local_file_path, callback=callback)
 
-def cluster2local(localDIR, clusterDIR, filename=None):
-    ssh, sftp = login2ssh()
+def cluster2local(localDIR, clusterDIR, filename=None, username=None, password=None):
+    ssh, sftp = login2ssh(username, password)
     try:
         if filename:
             download_file(sftp, localDIR, clusterDIR, filename)
@@ -101,10 +103,12 @@ def main():
     parser.add_argument('-f', '--filename', help='Specific file to transfer (optional)', default=None)
     parser.add_argument('--skip-dots', default=True, help='Skip files starting with "._"')
     parser.add_argument('--host', default='sftp.fmrib.ox.ac.uk', help='Hostname (default: sftp.fmrib.ox.ac.uk)')
+    parser.add_argument('--username', help='Username (default: None)', default=None)
+    parser.add_argument('--password', help='Password (default: None)', default=None)
     
     args = parser.parse_args()
     
-    cluster2local(args.local_dir, args.cluster_dir, args.filename)
+    cluster2local(args.local_dir, args.cluster_dir, args.filename, args.username, args.password)
 
 if __name__ == "__main__":
     main()
