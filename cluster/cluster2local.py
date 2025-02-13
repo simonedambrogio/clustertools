@@ -31,40 +31,40 @@ def login2ssh(hostname='sftp.fmrib.ox.ac.uk'):
         print(f"{RED}Connection failed: {str(e)}{RESET}")
         raise
 
-def download_file(sftp, localDIR, jalapenoDIR, filename):
+def download_file(sftp, localDIR, clusterDIR, filename):
     file_path_local = os.path.join(localDIR, filename)
-    file_path_jalapeno = os.path.join(jalapenoDIR, filename)
+    file_path_cluster = os.path.join(clusterDIR, filename)
 
     # Ensuring the local directory exists
     os.makedirs(os.path.dirname(file_path_local), exist_ok=True)
 
-    print(f"Remote file path: {file_path_jalapeno}")
+    print(f"Remote file path: {file_path_cluster}")
     print(f"Local file path: {file_path_local}")
     
     # Get file size for progress bar
-    file_size = sftp.stat(file_path_jalapeno).st_size
+    file_size = sftp.stat(file_path_cluster).st_size
     print(f"Remote file size: {round(file_size / 1024, 1)} KB")
 
     print(f"{YELLOW}Downloading {filename}...{RESET}")
     with tqdm(total=file_size, unit='B', unit_scale=True, desc=filename) as pbar:
         def callback(transferred, to_be_transferred):
             pbar.update(transferred - pbar.n)
-        sftp.get(file_path_jalapeno, file_path_local, callback=callback)
+        sftp.get(file_path_cluster, file_path_local, callback=callback)
     
     print(f'{GREEN}File {filename} download complete.{RESET}')
 
-def download_folder(sftp, localDIR, jalapenoDIR, is_top_level=True):
+def download_folder(sftp, localDIR, clusterDIR, is_top_level=True):
     # Adjust the local directory path only on the top-level call
     if is_top_level:
-        name_folder = os.path.basename(jalapenoDIR.rstrip('/'))
+        name_folder = os.path.basename(clusterDIR.rstrip('/'))
         localDIR = os.path.join(localDIR, name_folder)
         os.makedirs(localDIR, exist_ok=True)
 
-    print(f"{YELLOW}Downloading folder contents from {jalapenoDIR}...{RESET}")
+    print(f"{YELLOW}Downloading folder contents from {clusterDIR}...{RESET}")
 
-    for entry in sftp.listdir_attr(jalapenoDIR):
+    for entry in sftp.listdir_attr(clusterDIR):
         if not entry.filename.startswith('.'):
-            remote_file_path = os.path.join(jalapenoDIR, entry.filename)
+            remote_file_path = os.path.join(clusterDIR, entry.filename)
             local_file_path = os.path.join(localDIR, entry.filename)
 
             if S_ISDIR(entry.st_mode):
@@ -82,13 +82,13 @@ def download_folder(sftp, localDIR, jalapenoDIR, is_top_level=True):
                         pbar.update(transferred - pbar.n)
                     sftp.get(remote_file_path, local_file_path, callback=callback)
 
-def jalapeno2local(localDIR, jalapenoDIR, filename=None):
+def cluster2local(localDIR, clusterDIR, filename=None):
     ssh, sftp = login2ssh()
     try:
         if filename:
-            download_file(sftp, localDIR, jalapenoDIR, filename)
+            download_file(sftp, localDIR, clusterDIR, filename)
         else:
-            download_folder(sftp, localDIR, jalapenoDIR)
+            download_folder(sftp, localDIR, clusterDIR)
     finally:
         sftp.close()
         ssh.close()
@@ -104,7 +104,7 @@ def main():
     
     args = parser.parse_args()
     
-    jalapeno2local(args.local_dir, args.cluster_dir, args.filename)
+    cluster2local(args.local_dir, args.cluster_dir, args.filename)
 
 if __name__ == "__main__":
     main()
