@@ -1,6 +1,4 @@
 import os
-import paramiko
-import getpass
 from stat import S_ISDIR
 from tqdm import tqdm
 import argparse
@@ -12,6 +10,34 @@ GREEN = '\033[92m'
 YELLOW = '\033[93m'
 RESET = '\033[0m'
 
+# Add these global variables at the top of your file
+global_ssh = None
+global_sftp = None
+
+def get_ssh_connection(username=None, password=None, hostname=None):
+    """Get an SSH connection, reusing an existing one if available."""
+    global global_ssh, global_sftp
+    
+    # Check if we already have an active connection
+    if global_ssh is not None:
+        try:
+            # Test if the connection is still active
+            global_ssh.exec_command('echo test', timeout=5)
+            print(f"{GREEN}Using existing SSH connection{RESET}")
+            return global_ssh, global_sftp
+        except Exception:
+            # Connection is no longer active, close it and create a new one
+            try:
+                global_sftp.close()
+                global_ssh.close()
+            except:
+                pass
+            global_ssh = None
+            global_sftp = None
+    
+    # Create a new connection
+    global_ssh, global_sftp = login2ssh(username, password, hostname)
+    return global_ssh, global_sftp
 
 def download_file(sftp, localDIR, clusterDIR, filename):
     file_path_local = os.path.join(localDIR, filename)
@@ -65,16 +91,31 @@ def download_folder(sftp, localDIR, clusterDIR, is_top_level=True):
                     sftp.get(remote_file_path, local_file_path, callback=callback)
 
 def cluster2local(localDIR, clusterDIR, filename=None, username=None, password=None, hostname=None):
-    ssh, sftp = login2ssh(username, password, hostname)
+    # Use get_ssh_connection instead of login2ssh
+    ssh, sftp = get_ssh_connection(username, password, hostname)
     try:
         if filename:
             download_file(sftp, localDIR, clusterDIR, filename)
         else:
             download_folder(sftp, localDIR, clusterDIR)
     finally:
-        sftp.close()
-        ssh.close()
+        # Don't close the connection here, just print completion message
         print(f'{GREEN}Operation complete.{RESET}')
+
+# Add a new function to explicitly close the connection when needed
+def close_ssh_connection():
+    """Close the global SSH connection if it exists."""
+    global global_ssh, global_sftp
+    if global_ssh is not None:
+        try:
+            global_sftp.close()
+            global_ssh.close()
+            print(f"{GREEN}SSH connection closed{RESET}")
+        except Exception as e:
+            print(f"{RED}Error closing SSH connection: {str(e)}{RESET}")
+        finally:
+            global_ssh = None
+            global_sftp = None
 
 def main():
     parser = argparse.ArgumentParser(description='Transfer files/folders from cluster server to local machine')
