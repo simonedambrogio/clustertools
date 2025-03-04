@@ -4,7 +4,7 @@ import getpass
 from stat import S_ISDIR
 from tqdm import tqdm
 import argparse
-from login import login2ssh
+from cluster.login import login2ssh
 
 # Color constants
 RED = '\033[91m'
