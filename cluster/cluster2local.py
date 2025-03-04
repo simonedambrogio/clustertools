@@ -84,8 +84,8 @@ def download_folder(sftp, localDIR, clusterDIR, is_top_level=True):
                         pbar.update(transferred - pbar.n)
                     sftp.get(remote_file_path, local_file_path, callback=callback)
 
-def cluster2local(localDIR, clusterDIR, filename=None, username=None, password=None):
-    ssh, sftp = login2ssh(username, password)
+def cluster2local(localDIR, clusterDIR, filename=None, username=None, password=None, hostname=None):
+    ssh, sftp = login2ssh(username, password, hostname)
     try:
         if filename:
             download_file(sftp, localDIR, clusterDIR, filename)
@@ -102,13 +102,13 @@ def main():
     parser.add_argument('-c', '--cluster_dir', required=True, help='Source directory path on cluster')
     parser.add_argument('-f', '--filename', help='Specific file to transfer (optional)', default=None)
     parser.add_argument('--skip-dots', default=True, help='Skip files starting with "._"')
-    parser.add_argument('--host', default='sftp.fmrib.ox.ac.uk', help='Hostname (default: sftp.fmrib.ox.ac.uk)')
     parser.add_argument('--username', help='Username (default: None)', default=None)
     parser.add_argument('--password', help='Password (default: None)', default=None)
+    parser.add_argument('--host', help='Hostname (default: sftp.fmrib.ox.ac.uk)', default=None)
     
     args = parser.parse_args()
     
-    cluster2local(args.local_dir, args.cluster_dir, args.filename, args.username, args.password)
+    cluster2local(args.local_dir, args.cluster_dir, args.filename, args.username, args.password, args.host)
 
 if __name__ == "__main__":
     main()
