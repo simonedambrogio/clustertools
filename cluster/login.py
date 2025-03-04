@@ -22,7 +22,7 @@ def login2ssh(username=None, password=None, hostname=None):
         # Method 1: Try with combined password+2FA code
         try:
             # Get 2FA code
-            two_factor_code = input("Enter your 2FA code: ")
+            two_factor_code = getpass.getpass("Enter your 2FA code: ")
             
             # For BMRC, combine password and 2FA code as a single entry
             combined_password = password + two_factor_code
