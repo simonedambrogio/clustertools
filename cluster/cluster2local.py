@@ -4,6 +4,7 @@ import getpass
 from stat import S_ISDIR
 from tqdm import tqdm
 import argparse
+from login import login2ssh
 
 # Color constants
 RED = '\033[91m'
@@ -11,27 +12,6 @@ GREEN = '\033[92m'
 YELLOW = '\033[93m'
 RESET = '\033[0m'
 
-def login2ssh(username=None, password=None, hostname='sftp.fmrib.ox.ac.uk'):
-    if username is None:
-        username = input("Enter your username: ")
-    if password is None:
-        password = getpass.getpass("Enter your password: ")
-    print(f"Logging in to {hostname} as {username}...")
-    
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-    try:
-        ssh.connect(hostname=hostname, username=username, password=password)
-        print(f"{GREEN}Logged in to server successfully{RESET}")
-        sftp = ssh.open_sftp()
-        return ssh, sftp
-    except paramiko.AuthenticationException:
-        print(f"{RED}Authentication failed. Please check your username and password.{RESET}")
-        raise
-    except Exception as e:
-        print(f"{RED}Connection failed: {str(e)}{RESET}")
-        raise
 
 def download_file(sftp, localDIR, clusterDIR, filename):
     file_path_local = os.path.join(localDIR, filename)
