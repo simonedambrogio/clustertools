@@ -10,24 +10,55 @@ GREEN = '\033[92m'
 YELLOW = '\033[93m'
 RESET = '\033[0m'
 
-# Global variable to hold progress bar
-progress_bar = None
+# Global variables to track progress
+_last_percent = 0
+_last_update_time = 0
+_file_size = 0
+_start_time = 0
 
 def progress(filename, size, sent):
-    """Progress callback for SCP transfers."""
-    global progress_bar
+    """Simple progress tracking for SCP transfers."""
+    global _last_percent, _last_update_time, _file_size, _start_time
     
-    # Initialize the progress bar if it doesn't exist yet
-    if progress_bar is None:
-        progress_bar = tqdm(total=size, unit='B', unit_scale=True, desc=filename)
+    # Initialize tracking variables on first call
+    if sent == 0:
+        _file_size = size
+        _last_percent = 0
+        _start_time = time.time()
+        _last_update_time = 0
+        print(f"Downloading {filename} ({round(size / (1024*1024), 2)} MB)...")
     
-    # Update the progress bar with the difference in bytes
-    progress_bar.update(sent - progress_bar.n)
+    # Calculate current progress
+    percent = int((sent / size) * 100)
     
-    # If we've reached the total size, close the progress bar
-    if sent >= size:
-        progress_bar.close()
-        progress_bar = None
+    # Only update the display if percent changed or it's been more than a second
+    current_time = time.time()
+    if percent != _last_percent or (current_time - _last_update_time) > 1:
+        _last_percent = percent
+        _last_update_time = current_time
+        
+        # Calculate speed
+        elapsed = current_time - _start_time
+        if elapsed > 0:
+            speed = sent / elapsed / (1024*1024)  # MB/s
+            
+            # Calculate ETA
+            if sent > 0:
+                eta = elapsed * (size - sent) / sent
+                eta_str = f"{int(eta / 60)}m {int(eta % 60)}s"
+            else:
+                eta_str = "calculating..."
+                
+            # Print progress bar
+            bar_length = 30
+            filled_length = int(bar_length * percent // 100)
+            bar = '█' * filled_length + '░' * (bar_length - filled_length)
+            
+            print(f"\r[{bar}] {percent}% {round(sent/(1024*1024), 1)}/{round(size/(1024*1024), 1)} MB ({speed:.2f} MB/s) ETA: {eta_str}", end="", flush=True)
+            
+            # Print newline when complete
+            if sent >= size:
+                print("\nDownload complete!")
 
 def login2ssh(username=None, password=None, hostname=None, max_retries=3):
     if username is None:

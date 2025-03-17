@@ -77,20 +77,25 @@ def download_folder(ssh, scp, localDIR, clusterDIR):
             print(f"Could not determine directory size: {dir_size_output}")
             dir_size = 0
         
-        # Create tar archive on remote server with progress indication
+        # Create tar archive on remote server
         print(f"{YELLOW}Creating archive of {folder_name}...{RESET}")
         tar_command = f"cd {os.path.dirname(clusterDIR)} && tar -czf /tmp/temp_archive.tgz {folder_name}"
         
-        # Use a progress spinner while tar is running
+        # Start the tar command
         stdin, stdout, stderr = ssh.exec_command(tar_command)
         
-        with tqdm(total=100, desc="Creating archive", bar_format='{desc}: |{bar}| {percentage:3.0f}%') as pbar:
-            while not stdout.channel.exit_status_ready():
-                time.sleep(0.5)
-                pbar.update(5)  # Update by a small amount to show activity
-                pbar.refresh()
-            
-            exit_status = stdout.channel.recv_exit_status()
+        # Instead of a tqdm progress bar, use a simpler animation
+        print("Creating archive: ", end="", flush=True)
+        spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+        i = 0
+        while not stdout.channel.exit_status_ready():
+            print(f"\rCreating archive: {spinner[i % len(spinner)]}", end="", flush=True)
+            time.sleep(0.1)
+            i += 1
+        
+        # Get the exit status after the command completes
+        exit_status = stdout.channel.recv_exit_status()
+        print("\rCreating archive: Done!          ")
         
         if exit_status != 0:
             error = stderr.read().decode()
@@ -99,10 +104,14 @@ def download_folder(ssh, scp, localDIR, clusterDIR):
         
         # Get archive size
         stdin, stdout, stderr = ssh.exec_command("stat -c %s /tmp/temp_archive.tgz")
-        archive_size = int(stdout.read().decode().strip())
-        print(f"Archive size: {round(archive_size / (1024*1024), 2)} MB")
+        try:
+            archive_size = int(stdout.read().decode().strip())
+            print(f"Archive size: {round(archive_size / (1024*1024), 2)} MB")
+        except (ValueError, IndexError):
+            # If we can't get the size, continue anyway
+            print("Could not determine archive size")
         
-        # Download the archive - the progress bar is handled by our login.py progress function
+        # Download the archive
         print(f"{YELLOW}Downloading archive...{RESET}")
         scp.get("/tmp/temp_archive.tgz", temp_archive)
         
@@ -116,12 +125,20 @@ def download_folder(ssh, scp, localDIR, clusterDIR):
         print(f"{YELLOW}Extracting archive to {dest_dir}...{RESET}")
         import tarfile
         
+        # Count files in the archive
         with tarfile.open(temp_archive, "r:gz") as tar:
             members = tar.getmembers()
-            with tqdm(total=len(members), desc="Extracting files") as pbar:
-                for member in members:
-                    tar.extract(member, path=localDIR)
-                    pbar.update(1)
+            total_files = len(members)
+            
+            print(f"Extracting {total_files} files...")
+            
+            # Extract files with a simple counter instead of tqdm
+            for i, member in enumerate(members, 1):
+                if i % 100 == 0 or i == total_files:  # Update every 100 files or on the last file
+                    print(f"\rExtracting: {i}/{total_files} files ({(i/total_files)*100:.1f}%)", end="", flush=True)
+                tar.extract(member, path=localDIR)
+            
+            print("\rExtraction complete!                       ")
         
         print(f'{GREEN}Folder {folder_name} download complete.{RESET}')
         
