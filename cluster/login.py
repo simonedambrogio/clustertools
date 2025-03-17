@@ -1,14 +1,33 @@
 import paramiko
 import getpass
 import time
-from paramiko import SSHClient
 from scp import SCPClient
+from tqdm import tqdm
 
 # Color constants
 RED = '\033[91m'
 GREEN = '\033[92m'
 YELLOW = '\033[93m'
 RESET = '\033[0m'
+
+# Global variable to hold progress bar
+progress_bar = None
+
+def progress(filename, size, sent):
+    """Progress callback for SCP transfers."""
+    global progress_bar
+    
+    # Initialize the progress bar if it doesn't exist yet
+    if progress_bar is None:
+        progress_bar = tqdm(total=size, unit='B', unit_scale=True, desc=filename)
+    
+    # Update the progress bar with the difference in bytes
+    progress_bar.update(sent - progress_bar.n)
+    
+    # If we've reached the total size, close the progress bar
+    if sent >= size:
+        progress_bar.close()
+        progress_bar = None
 
 def login2ssh(username=None, password=None, hostname=None, max_retries=3):
     if username is None:
@@ -39,7 +58,7 @@ def login2ssh(username=None, password=None, hostname=None, max_retries=3):
             
             print(f"{GREEN}Successfully authenticated to {hostname}{RESET}")
             
-            # Create SCP client instead of SFTP
+            # Create SCP client with progress callback
             scp = SCPClient(ssh.get_transport(), progress=progress)
             
             # Return SSH and SCP client
@@ -55,10 +74,5 @@ def login2ssh(username=None, password=None, hostname=None, max_retries=3):
                 raise
     
     raise Exception(f"Failed to connect after {max_retries} attempts")
-
-def progress(filename, size, sent):
-    """Progress callback for SCP transfers."""
-    # This will be used by tqdm in the main functions
-    pass
 
 

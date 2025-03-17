@@ -1,10 +1,10 @@
 import os
-from stat import S_ISDIR
 from tqdm import tqdm
 import argparse
 import tempfile
 import shutil
 from cluster.login import login2ssh
+import time
 
 # Color constants
 RED = '\033[91m'
@@ -66,31 +66,62 @@ def download_folder(ssh, scp, localDIR, clusterDIR):
         folder_name = os.path.basename(clusterDIR.rstrip('/'))
         print(f"{YELLOW}Preparing remote folder for download...{RESET}")
         
-        # Create tar archive on remote server
+        # Check directory size first to estimate progress
+        size_cmd = f"du -sb {clusterDIR} | cut -f1"
+        stdin, stdout, stderr = ssh.exec_command(size_cmd)
+        dir_size_output = stdout.read().decode().strip()
+        try:
+            dir_size = int(dir_size_output)
+            print(f"Remote directory size: {round(dir_size / (1024*1024), 2)} MB")
+        except ValueError:
+            print(f"Could not determine directory size: {dir_size_output}")
+            dir_size = 0
+        
+        # Create tar archive on remote server with progress indication
+        print(f"{YELLOW}Creating archive of {folder_name}...{RESET}")
         tar_command = f"cd {os.path.dirname(clusterDIR)} && tar -czf /tmp/temp_archive.tgz {folder_name}"
+        
+        # Use a progress spinner while tar is running
         stdin, stdout, stderr = ssh.exec_command(tar_command)
-        exit_status = stdout.channel.recv_exit_status()
+        
+        with tqdm(total=100, desc="Creating archive", bar_format='{desc}: |{bar}| {percentage:3.0f}%') as pbar:
+            while not stdout.channel.exit_status_ready():
+                time.sleep(0.5)
+                pbar.update(5)  # Update by a small amount to show activity
+                pbar.refresh()
+            
+            exit_status = stdout.channel.recv_exit_status()
         
         if exit_status != 0:
             error = stderr.read().decode()
             print(f"{RED}Error creating archive: {error}{RESET}")
             raise Exception(f"Failed to create archive: {error}")
         
-        # Download the archive
-        print(f"{YELLOW}Downloading folder as archive...{RESET}")
+        # Get archive size
+        stdin, stdout, stderr = ssh.exec_command("stat -c %s /tmp/temp_archive.tgz")
+        archive_size = int(stdout.read().decode().strip())
+        print(f"Archive size: {round(archive_size / (1024*1024), 2)} MB")
+        
+        # Download the archive - the progress bar is handled by our login.py progress function
+        print(f"{YELLOW}Downloading archive...{RESET}")
         scp.get("/tmp/temp_archive.tgz", temp_archive)
         
         # Clean up remote temp file
         ssh.exec_command("rm /tmp/temp_archive.tgz")
         
-        # Extract archive to destination
+        # Extract archive to destination with progress bar
         dest_dir = os.path.join(localDIR, folder_name)
         os.makedirs(dest_dir, exist_ok=True)
         
         print(f"{YELLOW}Extracting archive to {dest_dir}...{RESET}")
         import tarfile
+        
         with tarfile.open(temp_archive, "r:gz") as tar:
-            tar.extractall(path=localDIR)
+            members = tar.getmembers()
+            with tqdm(total=len(members), desc="Extracting files") as pbar:
+                for member in members:
+                    tar.extract(member, path=localDIR)
+                    pbar.update(1)
         
         print(f'{GREEN}Folder {folder_name} download complete.{RESET}')
         
