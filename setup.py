@@ -10,8 +10,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'cluster2local=cluster.cluster2local:main',
-            'local2cluster=cluster.local2cluster:main',
+            'cluster2local=clustertools.cluster2local:main',
+            'local2cluster=clustertools.local2cluster:main',
         ],
     },
     author="Simone D'Ambrogio",

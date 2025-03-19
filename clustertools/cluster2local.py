@@ -3,7 +3,7 @@ from tqdm import tqdm
 import argparse
 import tempfile
 import shutil
-from cluster.login import login2ssh
+from clustertools.login import login2ssh
 import time
 
 # Color constants

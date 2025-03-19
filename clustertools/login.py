@@ -2,7 +2,6 @@ import paramiko
 import getpass
 import time
 from scp import SCPClient
-from tqdm import tqdm
 
 # Color constants
 RED = '\033[91m'
