@@ -7,6 +7,7 @@ setup(
     install_requires=[
         "paramiko>=3.5.1",
         "tqdm==4.65.0",
+        "scp==0.15.0"
     ],
     entry_points={
         'console_scripts': [
