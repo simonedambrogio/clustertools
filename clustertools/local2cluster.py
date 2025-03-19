@@ -78,11 +78,13 @@ def upload_folder(ssh, scp, localDIR, clusterDIR, skip_dots=True):
     
     print(f"{YELLOW}Preparing to upload folder {folder_name} to {clusterDIR}...{RESET}")
     
-    # Create the target directory on the remote server
-    try:
-        ssh.exec_command(f"mkdir -p {target_dir}")
-    except Exception as e:
-        print(f"{YELLOW}Warning creating remote directory: {str(e)}{RESET}")
+    # Create the target directory on the remote server - WAIT FOR COMPLETION
+    stdin, stdout, stderr = ssh.exec_command(f"mkdir -p {target_dir}")
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status != 0:
+        error = stderr.read().decode()
+        print(f"{RED}Error creating directory: {error}{RESET}")
+        raise Exception(f"Failed to create directory {target_dir}: {error}")
     
     # Calculate total upload size for reporting
     total_size = 0
@@ -96,9 +98,15 @@ def upload_folder(ssh, scp, localDIR, clusterDIR, skip_dots=True):
                 continue
                 
             local_file_path = os.path.join(dirpath, filename)
+            # Use a cleaner relative path construction
             rel_path = os.path.relpath(dirpath, localDIR)
-            remote_dir = os.path.join(target_dir, rel_path).replace("\\", "/")
-            remote_file_path = os.path.join(remote_dir, filename).replace("\\", "/")
+            remote_dir = os.path.normpath(os.path.join(target_dir, rel_path)).replace("\\", "/")
+            
+            # Avoid using "./" in paths
+            if rel_path == ".":
+                remote_file_path = os.path.join(target_dir, filename).replace("\\", "/")
+            else:
+                remote_file_path = os.path.join(remote_dir, filename).replace("\\", "/")
             
             file_size = os.path.getsize(local_file_path)
             total_size += file_size
@@ -107,16 +115,30 @@ def upload_folder(ssh, scp, localDIR, clusterDIR, skip_dots=True):
     
     print(f"Found {file_count} files to upload, total size: {round(total_size / (1024*1024), 2)} MB")
     
+    # Create all needed directories first in a single operation
+    all_dirs = set(item[1] for item in file_list)
+    remote_dirs_str = " ".join(all_dirs)
+    stdin, stdout, stderr = ssh.exec_command(f"mkdir -p {remote_dirs_str}")
+    exit_status = stdout.channel.recv_exit_status()
+    
+    if exit_status != 0:
+        error = stderr.read().decode()
+        print(f"{RED}Error creating directories: {error}{RESET}")
+        # Continue anyway - we'll try to create directories individually
+    
     # Upload files with progress tracking
     uploaded_size = 0
     start_time = time.time()
     
     for i, (local_file_path, remote_dir, remote_file_path, file_size) in enumerate(file_list, 1):
-        # Make sure the remote directory exists
-        try:
-            ssh.exec_command(f"mkdir -p {remote_dir}")
-        except Exception:
-            pass
+        # Make sure the remote directory exists - wait for completion this time
+        stdin, stdout, stderr = ssh.exec_command(f"mkdir -p {remote_dir}")
+        exit_status = stdout.channel.recv_exit_status()
+        
+        if exit_status != 0:
+            error = stderr.read().decode()
+            print(f"{RED}Error creating directory {remote_dir}: {error}{RESET}")
+            continue
             
         # Calculate overall progress
         percent = int((uploaded_size / total_size) * 100) if total_size > 0 else 0
@@ -128,16 +150,20 @@ def upload_folder(ssh, scp, localDIR, clusterDIR, skip_dots=True):
         # Display overall progress
         print(f"\rUploading: {i}/{file_count} files ({percent}%, {speed:.2f} MB/s, ETA: {eta_str})", end="", flush=True)
         
-        # Upload the file
-        filename = os.path.basename(local_file_path)
-        scp.put(local_file_path, remote_file_path)
-        
-        # Update progress
-        uploaded_size += file_size
+        try:
+            # Upload the file
+            filename = os.path.basename(local_file_path)
+            scp.put(local_file_path, remote_file_path)
+            
+            # Update progress
+            uploaded_size += file_size
+        except Exception as e:
+            print(f"\n{RED}Error uploading {local_file_path}: {str(e)}{RESET}")
+            # Continue with next file
     
     # Final progress update
     elapsed = time.time() - start_time
-    speed = total_size / elapsed / (1024*1024) if elapsed > 0 else 0
+    speed = total_size / elapsed / (1024*1024) if elapsed > 0 and uploaded_size > 0 else 0
     print(f"\r{GREEN}Upload complete: {file_count} files ({round(total_size/(1024*1024), 2)} MB) at {speed:.2f} MB/s{RESET}")
     
     return True
